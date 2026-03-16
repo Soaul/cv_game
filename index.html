@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lucas Requena — Portfolio RPG</title>
+
+  <!-- Polices pixel -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+  <!-- Phaser 3 -->
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+
+    html, body {
+      width:100%; height:100%;
+      background:#07050E;
+      overflow:hidden;
+      font-family:'Press Start 2P', monospace;
+    }
+
+    #game-container {
+      width:100vw; height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    /* Canvas Phaser */
+    canvas {
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      display:block !important;
+    }
+
+    /* Loader fallback */
+    #loader-fallback {
+      position:fixed; inset:0;
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:center;
+      background:#07050E;
+      color:#C8A030;
+      font-size:9px;
+      letter-spacing:3px;
+      gap:16px;
+      pointer-events:none;
+      opacity:1;
+      transition:opacity .4s;
+    }
+    #loader-fallback.hidden { opacity:0; pointer-events:none; }
+    #loader-spinner {
+      width:32px; height:32px;
+      border:3px solid #3A2800;
+      border-top-color:#C8A030;
+      border-radius:50%;
+      animation:spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform:rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+  <div id="loader-fallback">
+    <div id="loader-spinner"></div>
+    <span>CHARGEMENT…</span>
+  </div>
+
+  <div id="game-container"></div>
+
+  <!-- CV data -->
+  <script src="js/content.js"></script>
+  <script src="js/rooms.js"></script>
+  <script src="js/dialog.js"></script>
+
+  <!-- Phaser scenes -->
+  <script src="js/scenes/Preload.js"></script>
+  <script src="js/scenes/MenuScene.js"></script>
+  <script src="js/scenes/GameScene.js"></script>
+
+  <!-- Bootstrap -->
+  <script src="js/main.js"></script>
+
+  <script>
+    /* Masquer le loader fallback dès que Phaser démarre */
+    window.addEventListener('load', function() {
+      setTimeout(function() {
+        var f = document.getElementById('loader-fallback');
+        if (f) f.classList.add('hidden');
+      }, 500);
+    });
+  </script>
+</body>
+</html>
