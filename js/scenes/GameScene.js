@@ -25,7 +25,11 @@ var GameScene = new Phaser.Class({
     this.transitioning = false;
     this.playerDir    = 'down';
 
-    /* ── Groupes physiques ──────────────────── */
+    /* ── Fond monde (évite le noir entre salles) ─ */
+    // Rectangle couvrant tout le monde en couleur neutre de couloir
+    var worldBg = this.add.rectangle(0, 0, WW, RH, 0x2A2010).setOrigin(0, 0).setDepth(-10);
+
+    /* ── Groupes physiques ──────────────────────── */
     this.walls     = this.physics.add.staticGroup();
     this.furniture = this.physics.add.staticGroup();
 
@@ -43,10 +47,10 @@ var GameScene = new Phaser.Class({
       RW / 2, RH / 2, 'player'
     );
     this.player.setCollideWorldBounds(false);
-    /* Hitbox aux pieds */
-    this.player.setBodySize(28, 20);
-    this.player.setBodyOffset(30, 54);
-    this.player.setDepth(10);
+    /* Pas de scale — frame natif 77×77, character content = x:20-56, y:15-74
+       Hitbox = bande aux pieds (bas 16px de la zone de contenu) */
+    this.player.body.setSize(34, 14);
+    this.player.body.setOffset(22, 60);
     this.player.anims.play('idle_down');
 
     /* ── Collisions ─────────────────────────── */
@@ -129,9 +133,17 @@ var GameScene = new Phaser.Class({
     var g   = this.add.graphics();
 
     /* ── Sol ──────────────────────────────── */
-    // Base colorée
     g.fillStyle(def.floorColor, 1);
+    // Sol intérieur principal
     g.fillRect(rx + T, ry + T, RW - 2*T, RH - 2*T);
+    // Remplir le couloir de porte (ouverture dans le mur) avec la couleur du sol
+    // pour éviter que le fond noir de la scène ne soit visible
+    if (def.doors && def.doors.east) {
+      g.fillRect(rx + RW - T, ry + DR * T, T, DRS * T);
+    }
+    if (def.doors && def.doors.west) {
+      g.fillRect(rx, ry + DR * T, T, DRS * T);
+    }
 
     // Texture sol (TileSprite) si dispo
     if (this.textures.exists(def.floorTexture)) {
@@ -201,12 +213,11 @@ var GameScene = new Phaser.Class({
     /* ── Sprites portes ───────────────────── */
     if (this.textures.exists('door')) {
       if (def.doors && def.doors.east) {
-        var dE = this.add.image(rx + RW - T, ry + DR * T, 'door').setOrigin(0, 0).setDepth(5);
-        dE.setDisplaySize(T, DRS * T);
+        /* door.png = 96×144px (2×3 tiles). Place it so it covers the opening. */
+        this.add.image(rx + RW - T * 2, ry + DR * T, 'door').setOrigin(0, 0).setDepth(5);
       }
       if (def.doors && def.doors.west) {
-        var dW = this.add.image(rx, ry + DR * T, 'door').setOrigin(0, 0).setDepth(5);
-        dW.setDisplaySize(T, DRS * T);
+        this.add.image(rx, ry + DR * T, 'door').setOrigin(0, 0).setDepth(5);
       }
     }
 
@@ -221,30 +232,43 @@ var GameScene = new Phaser.Class({
     var T = CV.TILE;
     if (!this.textures.exists(obj.key)) return;
 
-    var tex    = this.textures.get(obj.key);
-    var srcW   = tex.source[0].width;
-    var srcH   = tex.source[0].height;
-    var px     = rx + obj.c * T;
-    var py     = ry + obj.r * T;
+    var px = rx + obj.c * T;
+    var py = ry + obj.r * T;
 
-    // Pour les objets "wall" (déco murale): collez contre le haut de la pièce
+    // Déco murale : colle au mur du haut
     if (obj.wall) {
-      py = ry + T;  // aligné au bord du mur du haut
+      py = ry + T;
     }
 
-    var img = this.add.image(px, py, obj.key).setOrigin(0, 0).setDepth(obj.r + 1);
-    // Affichage natif (pas de redimensionnement — déjà à 3×)
-    img.setDisplaySize(srcW, srcH);
+    /* Rendu natif — pas de setDisplaySize.
+       Les sprites sont déjà à 48px/tile, scale=1 exact → pas d'artefacts sub-pixel. */
+    var img = this.add.image(px, py, obj.key).setOrigin(0, 0);
+
+    /* Dimensions réelles depuis Phaser (après ajout) */
+    var srcW = img.width;
+    var srcH = img.height;
+
+    /* Depth Y-sort :
+       - Déco murale (wall=true) : toujours derrière → depth 0
+       - Meubles : basé sur la ligne de "pied" (bas du sprite - 1 tile)
+         pour que les objets hauts (étagères, armoires) restent derrière
+         le joueur qui passe devant eux */
+    if (obj.wall) {
+      img.setDepth(0);
+    } else {
+      // Pied de l'objet = bas du sprite moins demi-tile pour les objets hauts
+      var footY = py + Math.min(srcH, srcH - CV.TILE * 0.5);
+      img.setDepth(Math.floor(footY / CV.TILE));
+    }
 
     /* Corps physique (si solid) */
     if (obj.solid !== false) {
-      // Hitbox réduite (sans la zone transparente)
-      var bW = Math.min(srcW, T * Math.ceil(srcW / T));
-      var bH = Math.min(srcH * 0.6, T);  // seulement le bas pour les meubles hauts
+      /* Hitbox = bande basse du sprite (hauteur 1 tile, pleine largeur) */
+      var bH = Math.min(T, srcH);
       var hitbox = this.add.rectangle(
-        px + srcW/2,
-        py + srcH - bH/2,
-        bW, bH, 0, 0
+        px + srcW / 2,
+        py + srcH - bH / 2,
+        srcW * 0.85, bH, 0, 0
       ).setAlpha(0);
       this.physics.add.existing(hitbox, true);
       this.furniture.add(hitbox);
@@ -296,8 +320,9 @@ var GameScene = new Phaser.Class({
       p.anims.play(animKey, true);
     }
 
-    // Depth sort (personnage devant les objets sur les mêmes lignes)
-    p.setDepth(Math.floor(p.y / CV.TILE) + 10);
+    // Depth sort : pieds du joueur = p.y (body offset already at feet level)
+    // Add 0.5 so player is always slightly in front of same-tile furniture
+    p.setDepth(Math.floor(p.y / CV.TILE) + 0.5);
   },
 
   /* ════════════════════════════════════════════

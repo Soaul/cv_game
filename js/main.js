@@ -26,12 +26,15 @@ window.addEventListener('load', function () {
 
     scene: [ PreloadScene, MenuScene, GameScene ],
 
-    pixelArt:       true,
-    antialias:      false,
-    roundPixels:    true,
+    pixelArt:    false,   // we set NEAREST filter manually below
+    antialias:   false,
+    roundPixels: false,   // must stay false — roundPixels splits sprites at fractional zoom
 
     render: {
-      pixelArt: true,
+      pixelArt:       false,
+      antialias:      false,
+      antialiasGL:    false,
+      roundPixels:    false,
     },
   };
 

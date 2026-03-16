@@ -25,8 +25,10 @@ var PreloadScene = new Phaser.Class({
        Groom.png : 7 colonnes × 4 rangées, 88×77 px par frame
        Row 0 = bas/sud   Row 1 = gauche/ouest
        Row 2 = droite/est  Row 3 = haut/nord            */
+    /* Groom.png : 8 colonnes × 4 rangées, 77×77 px par frame
+       Row 0 = front/down  Row 1 = left  Row 2 = right  Row 3 = back/up */
     this.load.spritesheet('player', 'assets/player.png', {
-      frameWidth: 88, frameHeight: 77,
+      frameWidth: 77, frameHeight: 77,
     });
 
     /* ── Tilesets ─────────────────────────────── */
@@ -66,21 +68,27 @@ var PreloadScene = new Phaser.Class({
     var A = this.anims;
     var fps = 9;
 
-    // DOWN (row 0 : frames 0-6)
-    A.create({ key:'walk_down',  frames: A.generateFrameNumbers('player',{start:0, end:6}),  frameRate:fps, repeat:-1 });
+    /* 8 cols × 4 rows = 32 frames, 77×77 px
+       Row 0 (frames  0-7 ): facing DOWN
+       Row 1 (frames  8-15): facing LEFT
+       Row 2 (frames 16-23): facing RIGHT
+       Row 3 (frames 24-31): facing UP   */
+
+    // DOWN
+    A.create({ key:'walk_down',  frames: A.generateFrameNumbers('player',{start:1, end:6}),  frameRate:fps, repeat:-1 });
     A.create({ key:'idle_down',  frames: [{key:'player', frame:0}], frameRate:1 });
 
-    // LEFT (row 1 : frames 7-13)
-    A.create({ key:'walk_left',  frames: A.generateFrameNumbers('player',{start:7, end:13}), frameRate:fps, repeat:-1 });
-    A.create({ key:'idle_left',  frames: [{key:'player', frame:7}], frameRate:1 });
+    // LEFT
+    A.create({ key:'walk_left',  frames: A.generateFrameNumbers('player',{start:9, end:14}), frameRate:fps, repeat:-1 });
+    A.create({ key:'idle_left',  frames: [{key:'player', frame:8}], frameRate:1 });
 
-    // RIGHT (row 2 : frames 14-20)
-    A.create({ key:'walk_right', frames: A.generateFrameNumbers('player',{start:14,end:20}), frameRate:fps, repeat:-1 });
-    A.create({ key:'idle_right', frames: [{key:'player', frame:14}], frameRate:1 });
+    // RIGHT
+    A.create({ key:'walk_right', frames: A.generateFrameNumbers('player',{start:17, end:22}),frameRate:fps, repeat:-1 });
+    A.create({ key:'idle_right', frames: [{key:'player', frame:16}], frameRate:1 });
 
-    // UP (row 3 : frames 21-27)
-    A.create({ key:'walk_up',    frames: A.generateFrameNumbers('player',{start:21,end:27}), frameRate:fps, repeat:-1 });
-    A.create({ key:'idle_up',    frames: [{key:'player', frame:21}], frameRate:1 });
+    // UP
+    A.create({ key:'walk_up',    frames: A.generateFrameNumbers('player',{start:25, end:30}),frameRate:fps, repeat:-1 });
+    A.create({ key:'idle_up',    frames: [{key:'player', frame:24}], frameRate:1 });
 
     this.scene.start('Menu');
   },
